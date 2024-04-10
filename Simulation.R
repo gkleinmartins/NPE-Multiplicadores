@@ -16,6 +16,10 @@ library(data.table)
 # install.packages("dplyr")
 library(dplyr)
 
+## writexl----------------------------------------------------------------------
+#install.packages("writexl")     
+library(writexl)    
+
 ### Opening relevant data ------------------------------------------------------
 
 ## Setting work directory-------------------------------------------------------
@@ -42,10 +46,12 @@ class(subsidio_bndes$X2023)
 
 ### Analysis--------------------------------------------------------------------
 
+## First period: 2018-2022------------------------------------------------------
+
 # Extracting relevant row from data frame
 total_interest_payments <- as.numeric(subsidio_bndes[1, -ncol(subsidio_bndes)])
 
-# Not including 2023, total is partial
+# Since 2023 total is partial, adjustments will be done later
 
 # Creating vector of months per year
 
@@ -70,7 +76,8 @@ for (i in 1:length(total_interest_payments)) {
   end_index <- i * months_per_year
   total_interest_for_year <- total_interest_per_year[start_index:end_index]
   monthly_interest_rates_for_year <- monthly_interest_rates[, i]
-  monthly_total_interest_payments[start_index:end_index] <- total_interest_for_year * monthly_interest_rates_for_year / sum(monthly_interest_rates_for_year)
+  monthly_total_interest_payments[start_index:end_index] <- 
+    total_interest_for_year * monthly_interest_rates_for_year / sum(monthly_interest_rates_for_year)
 }
 
 # Result
@@ -110,13 +117,16 @@ sum_months_49_to_60 <- sum(monthly_total_interest_payments[49:60])
 print(sum_months_49_to_60)
 
 
-## Adapting to 2023 partial values----------------------------------------------
+## Adjustments for 2023 partial values------------------------------------------
 
 total_interest_payments_2023 <- as.numeric(subsidio_bndes$X2023)
 
 # Creating vector of months per year
 
 months_2023 <- 2
+
+# According to Tesouro (2024), the only months considered for the total are
+#january and february
 
 # Years of reference
 year_2023 <- 2023
@@ -138,7 +148,8 @@ for (i in 1:length(total_interest_payments_2023)) {
   end_index <- i * months_2023
   total_interest_2023 <- total_interest_2023[start_index:end_index]
   monthly_interest_rates_2023 <- monthly_interest_rates_2023[, i]
-  monthly_total_interest_payments_2023[start_index:end_index] <- total_interest_2023 * monthly_interest_rates_2023 / sum(monthly_interest_rates_2023)
+  monthly_total_interest_payments_2023[start_index:end_index] <- 
+    total_interest_2023 * monthly_interest_rates_2023 / sum(monthly_interest_rates_2023)
 }
 
 # Result
@@ -168,9 +179,6 @@ final_dataframe <- bind_rows(dataframe1, dataframe2)
 
 
 ## Excel file-------------------------------------------------------------------
-
-install.packages("writexl")     
-library("writexl")    
 
 write_xlsx(final_dataframe, 
            "C:\\Users\\lauro\\Documents\\GitHub\\NPE-Multiplicadores\\subsidios.xlsx")
