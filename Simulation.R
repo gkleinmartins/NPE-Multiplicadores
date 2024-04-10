@@ -112,13 +112,65 @@ print(sum_months_49_to_60)
 
 ## Adapting to 2023 partial values----------------------------------------------
 
-total_interest_payments <- as.numeric(subsidio_bndes[1, -ncol(subsidio_bndes)])
+total_interest_payments_2023 <- as.numeric(subsidio_bndes$X2023)
+
+# Creating vector of months per year
+
+months_2023 <- 2
+
+# Years of reference
+year_2023 <- 2023
+
+# Create monthly interest rates
+set.seed(123)  # for reproducibility
+monthly_interest_rates_2023 <- matrix(runif(length(total_interest_payments_2023) * 
+                                         months_2023), 
+                                 nrow = months_2023)
 
 
-my_dataframe <- data.frame(monthly_total_interest_payments)
+# Calculate total interest payments for 2023
+total_interest_2023 <- rep(total_interest_payments_2023, each = months_2023)
+
+# Distribute total interest payments proportionally across months
+monthly_total_interest_payments_2023 <- rep(NA, length(total_interest_2023))
+for (i in 1:length(total_interest_payments_2023)) {
+  start_index <- (i - 1) * months_2023 + 1
+  end_index <- i * months_2023
+  total_interest_2023 <- total_interest_2023[start_index:end_index]
+  monthly_interest_rates_2023 <- monthly_interest_rates_2023[, i]
+  monthly_total_interest_payments_2023[start_index:end_index] <- total_interest_2023 * monthly_interest_rates_2023 / sum(monthly_interest_rates_2023)
+}
+
+# Result
+monthly_total_interest_payments_2023
 
 
-excel_file <- "path_to_your_file.xlsx"
+## Checking results-------------------------------------------------------------
+# Calculate the sum of the first 2 observations
+sum_first_2_obs <- sum(monthly_total_interest_payments_2023[1:2])
 
-# Write the dataframe to an Excel file
-write.xlsx(my_dataframe, excel_file)
+# Print the result
+print(sum_first_2_obs)
+
+
+## Joining data frames----------------------------------------------------------
+
+dataframe1 <- data.frame(monthly_total_interest_payments)
+
+dataframe2 <- data.frame(monthly_total_interest_payments_2023)
+
+dataframe2 <- dataframe2 %>% 
+  rename(monthly_total_interest_payments=monthly_total_interest_payments_2023)
+
+rownames(dataframe2) = c("61", "62")
+
+final_dataframe <- bind_rows(dataframe1, dataframe2)
+
+
+## Excel file-------------------------------------------------------------------
+
+install.packages("writexl")     
+library("writexl")    
+
+write_xlsx(final_dataframe, 
+           "C:\\Users\\lauro\\Documents\\GitHub\\NPE-Multiplicadores\\subsidios.xlsx")
